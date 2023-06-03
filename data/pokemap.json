@@ -1,0 +1,23 @@
+{
+  "01H1V5PZ92DQG099M3ZJN6VZD6": {
+    "cooldown": 0,
+    "maps": []
+  },
+  "01GVWD66C8ENF2HJRWDP2J3HT3": {
+    "cooldown": 1685693898.6197274,
+    "maps": [
+      "moria-s-race-soccer",
+      "twisted-library-4"
+    ]
+  },
+  "01GVN2K5RY5HYKZDV2SFYD8PNV": {
+    "cooldown": 1685784573.80515,
+    "maps": [
+      "escape-room",
+      "yeskindo-noormimiz",
+      "nitro-soccer-field--alt-",
+      "leaf-clouds",
+      "rock-stadium-moon"
+    ]
+  }
+}
