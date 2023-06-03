@@ -73,6 +73,9 @@ async def updateaddondb():
     if not os.path.exists('data/addons.json'):
         f = open('data/addons.json', 'w')
         f.close()
+        
+        lis = {}
+
         for i in db.findall('track'):
             
             if int(i.get('status')) & 0x100:
@@ -148,7 +151,6 @@ async def statusloop():
 
         await asyncio.sleep(random.randint(15, 60))
 
-"""
 @client.error('message')
 async def on_error(e: Exception, message: Message):
     if isinstance(e, CommandNotFound):
@@ -161,7 +163,6 @@ async def on_error(e: Exception, message: Message):
         description = f'`{e}`',
         color = ACCENT
     ))
-"""
 
 @client.listen('ready')
 async def on_ready():
