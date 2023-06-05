@@ -31,7 +31,7 @@ def setup(client: commands.CommandsClient) -> commands.Cog:
         botmsg: Message = await ctx.send(f"![]({data[target]['image']})", embed=SendableEmbed(
             title = 'Guess the addon',
             description = 'Guess what the addon is!',
-            color = accentjkmn2
+            color = accent
         ))
 
         try:
