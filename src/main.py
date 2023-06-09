@@ -7,14 +7,20 @@ from voltage import (
 from voltage.ext import commands
 
 from utils.log import *
+import utils.stkhttp as stk
+from utils.bigip import bigip                
+
 from dotenv import dotenv_values, load_dotenv, set_key
 import aiohttp
 
 import asyncio
 import json
+import math
 import os
 import random
 import subprocess
+import sys
+import time
 import xml.etree.ElementTree as et
 
 load_dotenv()
@@ -25,6 +31,7 @@ try:
     STK_PASSWORD = dotenv_values()['stk_password']
     ACCENT = dotenv_values()['accent']
     PREFIX = dotenv_values()['prefix']
+    STKONLINE_CHANNELID = dotenv_values()['onlineusers_channelid']
 except KeyError as k:
     print(f'{k} was not provided. Please set up your .env file properly!')
     sys.exit(1)
@@ -33,23 +40,15 @@ client = commands.CommandsClient(PREFIX)
 
 async def stkAuth():
     log('STK', f'Authenticating SuperTuxKart Account "{STK_USERNAME}"...', color.RED)
-    proc = subprocess.run(['curl', '-sX', 'POST', '-d', f'username={STK_USERNAME}&password={STK_PASSWORD}&save_session=true', 'https://online.supertuxkart.net/api/v2/user/connect'], stdout=subprocess.PIPE)
-    
-    try:
-        proc.check_returncode()
-    except:
-        log('STK', 'Process returned non-zero status. Quitting.')
-        sys.exit(1)
 
-    data = proc.stdout.decode('utf-8')
+    data = stk.request('POST', 'connect', f'username={STK_USERNAME}&password={STK_PASSWORD}&save_session=true')
 
-    root = et.fromstring(data)
-    success = root.get('success')
-    token = root.get('token')
-    userid = root.get('userid')
+    success = data.get('success')
+    token = data.get('token')
+    userid = data.get('userid')
     
     if success == 'no':
-        log('STK', f'Failed to authenticate STK Account "{STK_USERNAME}": {root.get("info")}', color.RED)
+        log('STK', f'Failed to authenticate STK Account "{STK_USERNAME}": {data.get("info")}', color.RED)
         sys.exit(1)
 
     set_key('.env', "stk_token", token)
@@ -99,22 +98,93 @@ async def updateaddondb():
 async def stkPoll():
     while True:
         log('STK', 'Polling user.')
-        proc = subprocess.run(['curl', '-sX', 'POST', '-d', f'userid={dotenv_values()["stk_userid"]}&token={dotenv_values()["stk_token"]}', 'https://online.supertuxkart.net/api/v2/user/poll'], stdout=subprocess.PIPE)
 
-        try:
-            proc.check_returncode()
-            data = proc.stdout.decode('utf-8')
-        except:
-            log('STK', 'STK poll request failed: Process returned non-zero status')
-            return
+        data = stk.request('POST', 'poll', f'userid={dotenv_values()["stk_userid"]}&token={dotenv_values()["stk_token"]}')
 
-        root = et.fromstring(data)
-
-        if root.get('success') == 'no':
-            log('STK', f'STK poll request failed: {root.get("info")}. Attempting to reauthenticate.', color.RED)
+        if data.get('success') == 'no':
+            log('STK', f'STK poll request failed: {data.get("info")}. Attempting to reauthenticate.', color.RED)
             await stkAuth()
 
         await asyncio.sleep(120)
+
+async def stkonlineloop():
+    while True:
+        try:
+
+            channel = client.get_channel(STKONLINE_CHANNELID)
+
+            messages = await channel.history()
+
+            if len(messages) == 0:
+                msg = await channel.send(f'$%stkonline.{STKONLINE_CHANNELID}%$')
+                set_key('.env', 'stkonline_messageid', msg.id)
+            else:
+                load_dotenv()
+                msg = await channel.fetch_message(dotenv_values()['stkonline_messageid'])
+
+            result = ''
+
+            async with aiohttp.ClientSession() as session:
+        	    async with session.get('https://online.supertuxkart.net/api/v2/server/get-all') as resp:
+        		    data = await resp.text()
+        		
+            root = et.fromstring(data)
+
+            for _ in root[0]:
+
+                servername = _[0].get('name')
+                currtrack = _[0].get('current_track')
+                country = _[0].get('country_code')
+                maxplayers = _[0].get('max_players')
+                currplayers = _[0].get('current_players')
+                password: int = int(_[0].get('password'))
+                ip: int = int(_[0].get('ip'))
+                id: int = int(_[0].get('id'))
+                port: int = int(_[0].get('port'))
+                players = []
+
+
+                formattedip = bigip(ip)
+
+                for player in _[1]:
+                    players.append([player.get('country-code'), player.get('username'), int(float(player.get('time-played')))])
+
+                if len(players) > 0:
+
+                    result += f'**{"".join(chr(127397 + ord(k)) for k in country)} {servername} ({formattedip}:{port})**\n'
+                    result += f'**Server ID**: {id}\n'
+                    result += f'**Current Track**: {currtrack}\n'
+                    result += f'**Password Protected**: {"Yes" if password == 1 else "No"}\n'
+                    result += f'**Players: ({currplayers}/{maxplayers})**\n'
+                    result += '```\n'
+
+                    for pesant in players:
+                        result += (f'{"".join(chr(127397 + ord(k)) for k in pesant[0])} {pesant[1]} (Played for {pesant[2]} minutes)\n')
+
+                    if not (int(currplayers) - players.__len__() <= 0):
+                        result += (f'+{int(currplayers) - players.__len__()}\n')
+                    
+                    result += '```\n'
+
+                    result += '\n'
+                
+            if len(players) == 0:
+                result += 'Nobody is online... *OwO*\n\n'
+
+            result += f'Last updated: <t:{math.floor(time.time())}:D>, <t:{math.floor(time.time())}:T>\n'
+            result += '###### disclaimer: i dont host the bot, so this will mostly be outdated once it goes offline.'
+
+            await msg.edit(embed=SendableEmbed(
+                title = 'Online right now in STK',
+                description = (result),
+                color = ACCENT
+            ))
+
+        except Exception as e:
+            log('OnlineLoop', f'Error occured! {e}')
+            pass
+        
+        await asyncio.sleep(15)
 
 async def statusloop():
     while True:
@@ -182,6 +252,7 @@ async def on_ready():
                 log('Cogs', e)
     
     asyncio.create_task(statusloop())
+    asyncio.create_task(stkonlineloop())
     
     log(client.user.name, 'Initialization complete.', color.GREEN)
 
