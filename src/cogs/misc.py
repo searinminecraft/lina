@@ -40,5 +40,12 @@ def setup(client) -> commands.Cog:
 
         await ctx.send(embeds=[embed])
 
+    @misc.command('ping', 'Get ping', ['lag', 'latency'])
+    async def ping(ctx: commands.CommandContext):
+        before = time.time()
+        msg = await ctx.send('Measuring ping...')
+        after = time.time()
+
+        await msg.edit(f'Pong! {int((after - before) * 1000)}ms')
 
     return misc

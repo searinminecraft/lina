@@ -44,6 +44,6 @@ def setup(client: commands.CommandsClient) -> commands.Cog:
     @owner.command('shutdown', 'Shutdown the bot.')
     async def shutdown(ctx: commands.CommandContext):
         await ctx.reply('Shutting down.')
-        sys.exit(0)
+        sys.exit(1)
 
     return owner

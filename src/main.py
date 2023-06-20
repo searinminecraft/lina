@@ -11,9 +11,11 @@ import utils.stkhttp as stk
 from utils.bigip import bigip                
 
 from dotenv import dotenv_values, load_dotenv, set_key
+# from admin_console import AdminCommandExecutor, basic_command_set, colors
 import aiohttp
 
 import asyncio
+import datetime
 import json
 import math
 import os
@@ -97,11 +99,9 @@ async def updateaddondb():
 
 async def stkPoll():
     while True:
-        log('STK', 'Polling user.')
-
-        data = stk.request('POST', 'poll', f'userid={dotenv_values()["stk_userid"]}&token={dotenv_values()["stk_token"]}')
-
-        if data.get('success') == 'no':
+        try:
+            data = stk.request('POST', 'poll', f'userid={dotenv_values()["stk_userid"]}&token={dotenv_values()["stk_token"]}')
+        except stk.STKError:
             log('STK', f'STK poll request failed: {data.get("info")}. Attempting to reauthenticate.', color.RED)
             await stkAuth()
 
@@ -130,6 +130,8 @@ async def stkonlineloop():
         		
             root = et.fromstring(data)
 
+            totalplayers = 0
+
             for _ in root[0]:
 
                 servername = _[0].get('name')
@@ -151,10 +153,10 @@ async def stkonlineloop():
 
                 if len(players) > 0:
 
-                    result += f'**{"".join(chr(127397 + ord(k)) for k in country)} {servername} ({formattedip}:{port})**\n'
-                    result += f'**Server ID**: {id}\n'
+                    totalplayers += len(players)
+
+                    result += f'{":lock:" if password == 1 else ""} **{"".join(chr(127397 + ord(k)) for k in country)} {servername} ({formattedip}:{port})**\n'
                     result += f'**Current Track**: {currtrack}\n'
-                    result += f'**Password Protected**: {"Yes" if password == 1 else "No"}\n'
                     result += f'**Players: ({currplayers}/{maxplayers})**\n'
                     result += '```\n'
 
@@ -168,11 +170,11 @@ async def stkonlineloop():
 
                     result += '\n'
                 
-            if len(players) == 0:
+            if totalplayers == 0:
                 result += 'Nobody is online... *OwO*\n\n'
 
             result += f'Last updated: <t:{math.floor(time.time())}:D>, <t:{math.floor(time.time())}:T>\n'
-            result += '###### disclaimer: i dont host the bot, so this will mostly be outdated once it goes offline.'
+            result += '\n###### disclaimer: i don\'t host the bot, even though it is mostly up-to-date, it could be offline due to technical issues'
 
             await msg.edit(embed=SendableEmbed(
                 title = 'Online right now in STK',
@@ -187,7 +189,16 @@ async def stkonlineloop():
         await asyncio.sleep(15)
 
 async def statusloop():
+
     while True:
+        await asyncio.sleep(30)
+
+        # An easter egg if its teamkrash's birthday - Part 2
+
+        dt_now = datetime.datetime.now()
+        if dt_now.month == 6 and dt_now.day == 20:
+            return await client.set_status('Happy birthday teamkrash!!!', PresenceType.focus)
+
         status = [
             'kimden is sweet',
             'Benau be like:',
@@ -208,18 +219,17 @@ async def statusloop():
             '*purrs cutely*',
             'Install Gentoo',
             'Simple, fast, systemd-free!',
-            'OwO whats this?'
+            'OwO whats this?',
+            'Totally not hosted on NobWow\'s server'
         ]
 
         current = random.choice(status)
 
         try:
-            log('StatusLoop', f'Setting status to "{current}"...')
             await client.set_status(current, PresenceType.online)
         except Exception as e:
             log('StatusLoop', f'Error whilst changing status: {e}')
 
-        await asyncio.sleep(random.randint(15, 60))
 
 @client.error('message')
 async def on_error(e: Exception, message: Message):
@@ -234,6 +244,7 @@ async def on_error(e: Exception, message: Message):
         color = ACCENT
     ))
 
+
 @client.listen('ready')
 async def on_ready():
     log(client.user.name, 'Initializing...')
@@ -245,20 +256,27 @@ async def on_ready():
 
     for filename in os.listdir("./src/cogs"):
         if filename.endswith(".py"):
-            try:
+#            try:
                 client.add_extension(f"cogs.{filename[:-3]}")
                 log('Cogs', f'Loaded cog {filename}')
-            except Exception as e:
-                log('Cogs', e)
+#            except Exception as e:
+#                log('Cogs', f'Error at {filename}: {type(e)}: {e}')
     
     asyncio.create_task(statusloop())
     asyncio.create_task(stkonlineloop())
     
     log(client.user.name, 'Initialization complete.', color.GREEN)
 
+    # easter egg if its teamkrash's birthday - Part 1
+    
+    dt_now = datetime.datetime.now()
+
+    if dt_now.month == 6 and dt_now.day == 20:
+        log(client.user.name, 'Happy birthday teamkrash!!!', color.PURPLE)
+
+
 @client.listen('message')
 async def on_message(message: Message):
-
     if message.content == f'<@{client.user.id}>':
         return await message.channel.send(embed=SendableEmbed(
         	title = 'Hi there!',
@@ -270,4 +288,28 @@ async def on_message(message: Message):
 
     await client.handle_commands(message)
 
-client.run(TOKEN)
+"""
+async def startbot(): await client.start(TOKEN, banner=False)
+
+async def main():
+
+    asyncio.create_task(startbot())
+
+    console = AdminCommandExecutor(use_config=False)
+    basic_command_set(console)
+
+    console.promptarrow = "#"
+    console.promptheader = '[linaSTK]'
+    console.prompt_format['bold'] = True
+    console.prompt_format['fgcolor'] = colors.WHITE
+
+    await console.load_extensions()
+    await console.prompt_loop()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
+"""
+
+client.run(TOKEN, banner=False)

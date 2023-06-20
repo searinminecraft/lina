@@ -1,9 +1,12 @@
 from voltage import SendableEmbed
 from voltage.ext import commands
 from utils.log import *
+from utils import stkhttp
 import aiohttp
+import asyncpg
 
 import xml.etree.ElementTree as et
+from datetime import datetime
 import time
 import subprocess
 import random
@@ -15,6 +18,10 @@ from dotenv import load_dotenv, dotenv_values
 load_dotenv()
 
 accent = dotenv_values()['accent']
+postgresql_conn = dotenv_values()['postgresql_conn']
+
+credentials = f'userid={dotenv_values()["stk_userid"]}&token={dotenv_values()["stk_token"]}&'
+
 
 # Thanks DernisNW for giving the code for converting big ip addresses to readable ones.
 def bigip(x):
@@ -58,7 +65,6 @@ def setup(client) -> commands.Cog:
                 for player in _[1]:
                     players.append([player.get('country-code'), player.get('username'), int(float(player.get('time-played')))])
 
-                log('STK', f'Got {len(players)} on {servername}')
 
                 if not players == []:
 
@@ -194,48 +200,60 @@ def setup(client) -> commands.Cog:
 
     @stk.command('pokemap')
     async def pokemap(ctx: commands.CommandContext):
-        if not(os.path.exists('data/pokemap.json')):
-            f = open('data/pokemap.json', 'w')
-            f.close()
-            
-            with open('data/pokemap.json', 'w') as f:
-                json.dump({f"{client.user.id}": {"cooldown": 0, "maps": []}}, f, indent=2)
 
-        with open('data/pokemap.json', 'r') as f:
-            data = json.load(f)
+        with open('data/addons.json', 'r') as f:
+            addons = json.load(f)
 
-        if ctx.author.id not in data:
-            data[ctx.author.id] = {'cooldown': 0, 'maps': []}
-            with open('data/pokemap.json', 'w') as f:
-                json.dump(data, f, indent = 2)
-            return await ctx.reply('You have been added to the database. Please re-execute the command!')
+        addonCaught = random.choice(list(addons))
 
-        if not data[ctx.author.id]['cooldown'] > time.time():
-            with open('data/addons.json', 'r') as f:
-                addons = json.load(f)
+        # Thanks DernisNW for helping with the expression. Without him pokemap wouldn't use databases, or even features that need databases.
 
-            addonCaught = random.choice(list(addons))
+        insert_pokemap = '''
+        insert into pokemap (id, maps, cooldown) values ($1, $2, current_timestamp + '2h' ::interval)
+        on conflict (id) do update set maps = array_append(pokemap.maps, $2::text), cooldown = current_timestamp + '2h' ::interval;
+        '''
 
-            data[ctx.author.id]['cooldown'] = time.time() + 7200
-            data[ctx.author.id]['maps'].append(addonCaught)
+        sql_pokemap = '''
+        select * from pokemap where id = $1;
+        '''
 
-            await ctx.send(embed=SendableEmbed(
+        conn = await asyncpg.connect(postgresql_conn)
+        prepared_data = await conn.prepare(sql_pokemap)
+        data = await prepared_data.fetchrow(ctx.author.id)
+
+        cooldown = data['cooldown']
+
+        if cooldown.timestamp() > (datetime.now().timestamp() + 7200):
+            pass
+        else: return await ctx.reply(embed=SendableEmbed(
+            title = 'PokeMap',
+                description = f'Command in cooldown. You can catch another one at: {cooldown} (UTC)'
+        ))
+
+        try:
+            await conn.execute(insert_pokemap, ctx.author.id, {addonCaught})
+        except Exception as e:
+            return await ctx.reply(embed=SendableEmbed(
+                title = 'Database error',
+                description = f'''A database error occured while processing data. Please contact the author.
+
+
+### Detailed information:
+```
+{type(e)}: {e}
+```''',
+                color = accent
+            ))
+
+        await ctx.send(embed=SendableEmbed(
                 title = 'PokeMap',
-                description = f"""<@{ctx.author.id}>, you\'ve caught a **{addons[addonCaught]["name"]}**!
+                description = f"""{ctx.author.name}, you\'ve caught a **{addons[addonCaught]["name"]}**!
                 
                 `/installaddon {addonCaught}`""",
                 color = accent,
                 icon_url = addons[addonCaught]["image"]
-            ))
-        else:
-            return await ctx.send(embed=SendableEmbed(
-                title = 'PokeMap',
-                description = f"<@{ctx.author.id}>, the command is in cooldown. You can execute it again <t:{math.floor(data[ctx.author.id]['cooldown'])}:R>",
-                color = accent
-            ))
+        ))
 
-        with open('data/pokemap.json', 'w') as f:
-            json.dump(data, f, indent = 2)
 
     @stk.command('addondetails', 'Get details of a SuperTuxKart addon.')
     async def addondetails(ctx: commands.CommandContext, addonid: str = None):
@@ -269,6 +287,28 @@ def setup(client) -> commands.Cog:
             icon_url = data[addonid]['image'],
             color = accent
         ))
+
+    @stk.command('friendslist', 'Get a user\'s friends list.')
+    async def friendslist(ctx: commands.CommandContext, userid: int = None):
+        if userid is None:
+            return await ctx.reply('Please provide a user id!')
+        data = stkhttp.request('POST', 'get-friends-list', f'{credentials}visitingid={userid}')
+
+        result = ''
+
+        for i in data:
+            result += f'* {data[i]["user_name"]} ({data[i]["id"]})\n'
+
+        if len(result) > 2000:
+            return await ctx.reply('They have so many friends I can\'t fit all of it due to the character limit. Sorry about that!')
+
+        await ctx.send(embed=SendableEmbed(
+            title = f'Friends of user ID {userid}',
+            description = result,
+            color = accent
+        ))
+
+        print(data)
 
        
     return stk
