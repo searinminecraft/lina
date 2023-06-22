@@ -6,7 +6,7 @@ import aiohttp
 import asyncpg
 
 import xml.etree.ElementTree as et
-from datetime import datetime
+from datetime import datetime, timezone
 import time
 import subprocess
 import random
@@ -209,8 +209,8 @@ def setup(client) -> commands.Cog:
         # Thanks DernisNW for helping with the expression. Without him pokemap wouldn't use databases, or even features that need databases.
 
         insert_pokemap = '''
-        insert into pokemap (id, maps, cooldown) values ($1, $2, current_timestamp + '2h' ::interval)
-        on conflict (id) do update set maps = array_append(pokemap.maps, $2::text), cooldown = current_timestamp + '2h' ::interval;
+        insert into pokemap (id, maps, cooldown) values ($1, $2::text[], current_timestamp + '2h' ::interval)
+        on conflict (id) do update set maps = array_append(pokemap.maps, $3), cooldown = current_timestamp + '2h' ::interval;
         '''
 
         sql_pokemap = '''
@@ -219,19 +219,24 @@ def setup(client) -> commands.Cog:
 
         conn = await asyncpg.connect(postgresql_conn)
         prepared_data = await conn.prepare(sql_pokemap)
+
         data = await prepared_data.fetchrow(ctx.author.id)
-
-        cooldown = data['cooldown']
-
-        if cooldown.timestamp() > (datetime.now().timestamp() + 7200):
-            pass
-        else: return await ctx.reply(embed=SendableEmbed(
-            title = 'PokeMap',
-                description = f'Command in cooldown. You can catch another one at: {cooldown} (UTC)'
-        ))
-
         try:
-            await conn.execute(insert_pokemap, ctx.author.id, {addonCaught})
+            cooldown = data['cooldown']
+
+            print('cooldown:', cooldown.timestamp())
+            print('current:', datetime.now().timestamp())
+
+            if cooldown.timestamp() < datetime.now().timestamp(): pass
+            else: return await ctx.reply(embed=SendableEmbed(
+                title = 'PokeMap',
+                    description = f'Command in cooldown. You can catch another pokemap <t:{math.floor(cooldown.timestamp())}:R>',
+                color = accent
+            ))
+        except: pass
+    
+        try:
+            await conn.execute(insert_pokemap, ctx.author.id, {addonCaught}, addonCaught)
         except Exception as e:
             return await ctx.reply(embed=SendableEmbed(
                 title = 'Database error',
