@@ -18,7 +18,7 @@ def request(method: str, call: str, args: str):
 
     ret = None
 
-    process = subprocess.run(['curl', '-sX', method, '-d', args, f'https://online.supertuxkart.net/api/v2/user/{call}'], stdout=subprocess.PIPE)
+    process = subprocess.run(['curl', '-sX', method, '-d', args, '--user-agent', 'SuperTuxKart/1.4 (Linux)', f'https://online.supertuxkart.net/api/v2/user/{call}'], stdout=subprocess.PIPE)
 
     try:
         process.check_returncode()
