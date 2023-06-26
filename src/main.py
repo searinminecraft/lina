@@ -42,17 +42,16 @@ client = commands.CommandsClient(PREFIX)
 
 async def stkAuth():
     log('STK', f'Authenticating SuperTuxKart Account "{STK_USERNAME}"...', color.RED)
+    
+    try:
+        data = stk.request('POST', 'connect', f'username={STK_USERNAME}&password={STK_PASSWORD}&save_session=true')
+    except stk.STKError as e:
+        log('STK', f'Failed to authenticate STK Account "{STK_USERNAME}": {e.reason}. Quitting...', color.RED)
+        sys.exit(1)
 
-    data = stk.request('POST', 'connect', f'username={STK_USERNAME}&password={STK_PASSWORD}&save_session=true')
-
-    success = data.get('success')
     token = data.get('token')
     userid = data.get('userid')
     
-    if success == 'no':
-        log('STK', f'Failed to authenticate STK Account "{STK_USERNAME}": {data.get("info")}', color.RED)
-        sys.exit(1)
-
     set_key('.env', "stk_token", token)
     set_key('.env', "stk_userid", userid)
 
@@ -101,8 +100,8 @@ async def stkPoll():
     while True:
         try:
             data = stk.request('POST', 'poll', f'userid={dotenv_values()["stk_userid"]}&token={dotenv_values()["stk_token"]}')
-        except stk.STKError:
-            log('STK', f'STK poll request failed: {data.get("info")}. Attempting to reauthenticate.', color.RED)
+        except stk.STKError as e:
+            log('STK', f'STK poll request failed: {e.reason}. Attempting to reauthenticate.', color.RED)
             await stkAuth()
 
         await asyncio.sleep(120)
@@ -193,11 +192,24 @@ async def statusloop():
     while True:
         await asyncio.sleep(30)
 
-        # An easter egg if its teamkrash's birthday - Part 2
+        # Birthday statuses
 
         dt_now = datetime.datetime.now()
+
+        ### teamkrash
+
         if dt_now.month == 6 and dt_now.day == 20:
-            return await client.set_status('Happy birthday teamkrash!!!', PresenceType.focus)
+            return await client.set_status('Happy birthday teamkrash!', PresenceType.focus)
+
+        ### Dapdap (don't ask who that is)
+
+        if dt_now.month == 6 and dt_now.day == 14:
+            return await client.set_status('Happy Birthday Dapdap!', PresenceType.focus)
+
+        ### Meeeeeee :)
+
+        if dt_now.month == 10 and dt_now.day == 12:
+            return await client.set_status('Happy birthday searinminecraft!', PresenceType.focus)
 
         status = [
             'kimden is sweet',
@@ -208,7 +220,7 @@ async def statusloop():
             'My sibling amii is the best!',
             'I love searinminecraft',
             'Avatar drawn by searinminecraft',
-            'Mention me for prefix!'
+            'Mention me for prefix!',
             f'{PREFIX}help for commands!',
             'aeasus',
             'RIP Snakebot :(',
@@ -249,18 +261,17 @@ async def on_error(e: Exception, message: Message):
 async def on_ready():
     log(client.user.name, 'Initializing...')
 
-    await client.set_status('Initializing lina...', PresenceType.focus)
     await stkAuth()
     asyncio.create_task(stkPoll())
     asyncio.create_task(updateaddondb())
 
     for filename in os.listdir("./src/cogs"):
         if filename.endswith(".py"):
-#            try:
+            try:
                 client.add_extension(f"cogs.{filename[:-3]}")
                 log('Cogs', f'Loaded cog {filename}')
-#            except Exception as e:
-#                log('Cogs', f'Error at {filename}: {type(e)}: {e}')
+            except Exception as e:
+                log('Cogs', f'Error at {filename}: {type(e)}: {e}')
     
     asyncio.create_task(statusloop())
     asyncio.create_task(stkonlineloop())
