@@ -11,4 +11,4 @@ class color:
    END = '\033[0m'
 
 def log(srv: str, msg: str, clr = color.RED):
-    print(f'{clr}{"[" + srv + "]":13}{msg}{color.END}')
+    print(f'{color.BOLD}{clr}{"[" + srv + "]":13}{msg}{color.END}')

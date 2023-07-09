@@ -1,6 +1,7 @@
-from voltage import SendableEmbed
+from voltage import SendableEmbed, Member
 from voltage.ext import commands
 from utils.log import *
+from utils.bigip import bigip
 from utils import stkhttp
 import aiohttp
 import asyncpg
@@ -13,7 +14,6 @@ import random
 import math
 import os
 import json
-
 from dotenv import load_dotenv, dotenv_values
 load_dotenv()
 
@@ -23,12 +23,9 @@ postgresql_conn = dotenv_values()['postgresql_conn']
 credentials = f'userid={dotenv_values()["stk_userid"]}&token={dotenv_values()["stk_token"]}&'
 
 
-# Thanks DernisNW for giving the code for converting big ip addresses to readable ones.
-def bigip(x):
-    return '.'.join([str(y) for y in int.to_bytes(int(x), 4, 'big')])
 
 
-def setup(client) -> commands.Cog:
+def setup(client: commands.CommandsClient) -> commands.Cog:
     stk = commands.Cog(
         name = 'SuperTuxKart',
         description = 'The core of Lina!'
@@ -139,17 +136,14 @@ def setup(client) -> commands.Cog:
     async def topranked(ctx: commands.CommandContext):
         load_dotenv()
         log('STK', 'Retrieving top ranked players...')
-        data = subprocess.run(['curl', '-sX', 'POST', '-d', f'userid={dotenv_values()["stk_userid"]}&token={dotenv_values()["stk_token"]}', 'https://online.supertuxkart.net/api/v2/user/top-players'], stdout=subprocess.PIPE).stdout.decode('utf-8')
-        
-        root = et.fromstring(data)
+
+        data = stkhttp.request('POST', 'top-players', credentials)
+
         output = ''
         place = 1
 
-        if root.get('success') == 'no':
-            raise Exception(root.get('info'))
-
-        for player in root[0].findall('player'):
-            output += f'{place}. **{player.get("username")}**: {math.floor(float(player.get("scores")))}\n'
+        for player in data:
+            output += f'{place}. **{data[player]["username"]}**: {math.floor(float(data[player]["scores"]))}\n'
             place += 1
 
         embed = SendableEmbed(
@@ -198,6 +192,31 @@ def setup(client) -> commands.Cog:
 
         await ctx.send(embed=embed)
 
+    @stk.command()
+    async def maps(ctx: commands.CommandContext, user: Member = None):
+        if user is None:
+            user = ctx.author
+        with open('data/addons.json', 'r') as f:
+            addons = json.load(f)
+
+        conn = await asyncpg.connect(postgresql_conn)
+        prepared_data = await conn.prepare('select maps from pokemap where id = $1')
+        data = await prepared_data.fetchrow(user.id)
+
+        if data is None:
+            return await ctx.reply(f'User {user.name} does not have any maps.')
+
+        output = ''
+
+        for i in data['maps']:
+            output += f'* {addons[i]["name"]}\n'
+
+        await ctx.reply(embed=SendableEmbed(
+            title = f'{user.name}\'s map collection',
+            description = output,
+            color = accent,
+            icon_url = user.display_avatar.url + '?max_side=64'
+        ))
     @stk.command('pokemap')
     async def pokemap(ctx: commands.CommandContext):
 
@@ -305,7 +324,7 @@ def setup(client) -> commands.Cog:
             result += f'* {data[i]["user_name"]} ({data[i]["id"]})\n'
 
         if len(result) > 2000:
-            return await ctx.reply('They have so many friends I can\'t fit all of it due to the character limit. Sorry about that!')
+            return await ctx.reply(f'They have so many friends I can\'t fit all of it due to the character limit. Sorry about that!\nAnyway, the user has **{len(data)}** friends.')
 
         await ctx.send(embed=SendableEmbed(
             title = f'Friends of user ID {userid}',
@@ -313,7 +332,37 @@ def setup(client) -> commands.Cog:
             color = accent
         ))
 
-        print(data)
+    @stk.command()
+    async def atokas(ctx: commands.CommandContext, user: Member = None):
+        if user is None:
+            user = ctx.author
 
-       
+        try:
+            conn = await asyncpg.connect(postgresql_conn)
+            prepared_data = await conn.prepare('select atokas from atokas where id = $1')
+            data = await prepared_data.fetchrow(user.id)
+        except Exception as e:
+             return await ctx.reply(embed=SendableEmbed(
+                title = 'Database error',
+                description = f'''A database error occured while retrieving data. Please contact the author.
+
+
+### Detailed information:
+```
+{type(e)}: {e}
+```''',
+                color = accent
+            ))
+
+        if data is None:
+            return await ctx.reply(f'User {user.name} does not have any atokas. Guess they werent appreciated...')
+        else:
+            return await ctx.send(embed=SendableEmbed(
+                title = f"{user.name}'s atokas",
+                description = f"{user.name} has {data['atokas']} atokas.",
+                icon_url = user.display_avatar.url + '?max_side=64',
+                color = accent
+            ))       
+
     return stk
+

@@ -7,8 +7,14 @@ im forced to use curl. thanks benai for making the api as shitty as possible
 
 import subprocess
 import xml.etree.ElementTree as et
+from .log import *
+from dotenv import dotenv_values, load_dotenv
 
 class STKError(Exception):
+    
+    def __init__(self, reason: str):
+        self.reason = reason
+
     pass
 
 class ProcessError(Exception):
@@ -16,9 +22,15 @@ class ProcessError(Exception):
 
 def request(method: str, call: str, args: str):
 
+    load_dotenv()
+
+    cmd = ['curl', '-sX', method, '-d', args, '--user-agent', 'SuperTuxKart/1.4 (Linux)', f'https://online.supertuxkart.net/api/v2/user/{call}'] 
+
     ret = None
 
-    process = subprocess.run(['curl', '-sX', method, '-d', args, '--user-agent', 'SuperTuxKart/1.4 (Linux)', f'https://online.supertuxkart.net/api/v2/user/{call}'], stdout=subprocess.PIPE)
+    log('STKHttp', f'Sending {str(cmd[4]).replace(dotenv_values()["stk_token"], "[redacted]" ).replace(dotenv_values()["stk_password"], "[redacted]")} to {cmd[7]}', color.BLUE)
+
+    process = subprocess.run(cmd, stdout=subprocess.PIPE)
 
     try:
         process.check_returncode()
@@ -29,6 +41,7 @@ def request(method: str, call: str, args: str):
 
     if data.get('success') == 'no':
         raise STKError(data.get('info'))
+
 
     match call:
         case 'poll':

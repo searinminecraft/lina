@@ -13,6 +13,7 @@ from utils.bigip import bigip
 from dotenv import dotenv_values, load_dotenv, set_key
 # from admin_console import AdminCommandExecutor, basic_command_set, colors
 import aiohttp
+import asyncpg
 
 import asyncio
 import datetime
@@ -23,6 +24,7 @@ import random
 import subprocess
 import sys
 import time
+from utils.addonid_toname import addonid_toname
 import xml.etree.ElementTree as et
 
 load_dotenv()
@@ -34,11 +36,35 @@ try:
     ACCENT = dotenv_values()['accent']
     PREFIX = dotenv_values()['prefix']
     STKONLINE_CHANNELID = dotenv_values()['onlineusers_channelid']
+    FETCHER_INTERVAL = int(dotenv_values()['fetcher_interval_sec'])
 except KeyError as k:
     print(f'{k} was not provided. Please set up your .env file properly!')
     sys.exit(1)
-    
+
 client = commands.CommandsClient(PREFIX)
+
+async def friendrequestHandler():
+    while True:
+        log('friendreq', 'Checking for incoming friend requests.')
+        try:
+            data = stk.request('POST', 'get-friends-list', f'userid={dotenv_values()["stk_userid"]}&token={dotenv_values()["stk_token"]}&visitingid={dotenv_values()["stk_userid"]}')
+
+            for i in data:
+                if data[i]['is_pending'] == 'yes' and data[i]['is_asker'] == 'yes':
+                    log('friendreq', f'Attempting to accept friend request of user {data[i]["user_name"]} ({data[i]["id"]})')
+                    
+                    try:
+                        stk.request('POST', 'accept-friend-request', f'userid={dotenv_values()["stk_userid"]}&token={dotenv_values()["stk_token"]}&friendid={data[i]["id"]}')
+                    except stk.STKError as e:
+                        log('friendreq', f'Error on accept: {e}')
+
+
+        except stk.STKError as e:
+            log('friendreq', f'Error: {e}')
+        finally:
+            await asyncio.sleep(600)
+
+
 
 async def stkAuth():
     log('STK', f'Authenticating SuperTuxKart Account "{STK_USERNAME}"...', color.RED)
@@ -104,7 +130,7 @@ async def stkPoll():
             log('STK', f'STK poll request failed: {e.reason}. Attempting to reauthenticate.', color.RED)
             await stkAuth()
 
-        await asyncio.sleep(120)
+        await asyncio.sleep(60)
 
 async def stkonlineloop():
     while True:
@@ -133,7 +159,7 @@ async def stkonlineloop():
 
             for _ in root[0]:
 
-                servername = _[0].get('name')
+                servername = _[0].get('name').replace('\r', '').replace('\n', ' ')
                 currtrack = _[0].get('current_track')
                 country = _[0].get('country_code')
                 maxplayers = _[0].get('max_players')
@@ -148,32 +174,29 @@ async def stkonlineloop():
                 formattedip = bigip(ip)
 
                 for player in _[1]:
-                    players.append([player.get('country-code'), player.get('username'), int(float(player.get('time-played')))])
+                    players.append([player.get('country-code'), player.get('username')])
 
                 if len(players) > 0:
 
                     totalplayers += len(players)
 
-                    result += f'{":lock:" if password == 1 else ""} **{"".join(chr(127397 + ord(k)) for k in country)} {servername} ({formattedip}:{port})**\n'
-                    result += f'**Current Track**: {currtrack}\n'
-                    result += f'**Players: ({currplayers}/{maxplayers})**\n'
-                    result += '```\n'
+                    result += f'\n ##### {":lock:" if password == 1 else ""} {"".join(chr(127397 + ord(k)) for k in country)} {servername} | {formattedip}:{port} | {len(players)} players | {addonid_toname(currtrack)}\n\n'
+
+                    formatted = []
 
                     for pesant in players:
-                        result += (f'{"".join(chr(127397 + ord(k)) for k in pesant[0])} {pesant[1]} (Played for {pesant[2]} minutes)\n')
+                        formatted.append(f'`{"".join(chr(127397 + ord(k)) for k in pesant[0])} {pesant[1]}`')
 
+                    result += " ".join(formatted)
                     if not (int(currplayers) - players.__len__() <= 0):
-                        result += (f'+{int(currplayers) - players.__len__()}\n')
+                        result += (f'\n+{int(currplayers) - len(players)}\n')
                     
-                    result += '```\n'
-
-                    result += '\n'
+                    result += '\n\n'
                 
             if totalplayers == 0:
                 result += 'Nobody is online... *OwO*\n\n'
 
-            result += f'Last updated: <t:{math.floor(time.time())}:D>, <t:{math.floor(time.time())}:T>\n'
-            result += '\n###### disclaimer: i don\'t host the bot, even though it is mostly up-to-date, it could be offline due to technical issues'
+            result += f'\n###### Last updated: <t:{math.floor(time.time())}:D>, <t:{math.floor(time.time())}:T>\n'
 
             await msg.edit(embed=SendableEmbed(
                 title = 'Online right now in STK',
@@ -185,7 +208,7 @@ async def stkonlineloop():
             log('OnlineLoop', f'Error occured! {e}')
             pass
         
-        await asyncio.sleep(15)
+        await asyncio.sleep(FETCHER_INTERVAL)
 
 async def statusloop():
 
@@ -275,6 +298,7 @@ async def on_ready():
     
     asyncio.create_task(statusloop())
     asyncio.create_task(stkonlineloop())
+    asyncio.create_task(friendrequestHandler())
     
     log(client.user.name, 'Initialization complete.', color.GREEN)
 
@@ -296,6 +320,23 @@ async def on_message(message: Message):
         	color = ACCENT
         ))
 
+    if message.replies is not None:
+        for i in message.replies:
+            i: Message
+            
+            if i.content is not None:
+                if message.content is not None:
+                    if message.content.lower().find('thank') >= 0 or message.content.lower().find('thanks') >= 0:
+                        conn = await asyncpg.connect(dotenv_values()['postgresql_conn'])
+                        try:
+                            await conn.execute('''
+                            insert into atokas (id, atokas) values ($1, $2)
+                            on conflict (id) do update set atokas = atokas.atokas + 1
+                            ''', i.author.id, 1)
+                        except Exception as e:
+                            return await message.channel.send(f'I tried giving atokas to <@{i.author.id}>, but a database error occured. Sorry about that!\n||{e}||')
+
+                        await message.channel.send(f'Gave +1 atokas to <@{i.author.id}>')
 
     await client.handle_commands(message)
 
