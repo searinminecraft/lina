@@ -2,6 +2,7 @@ import voltage
 from voltage.ext import commands
 
 import sys
+import json
 
 def setup(client: commands.CommandsClient) -> commands.Cog:
 
@@ -45,5 +46,37 @@ def setup(client: commands.CommandsClient) -> commands.Cog:
     async def shutdown(ctx: commands.CommandContext):
         await ctx.reply('Shutting down.')
         sys.exit(1)
+
+    @commands.is_owner()
+    @owner.command(description = 'Manually add an addon entry to database (for unknown tracks)')
+    async def addAddonEntry(ctx: commands.CommandContext, id: str, name: str, uploader: str, designer: str, file: str, image: str):
+        with open('data/addons.json', 'r') as f:
+            data = json.load(f)
+
+
+        data[id] = {
+            "id": id,
+            "name": name.replace("\"", ""),
+            "file": file,
+            "date": "0",
+            "uploader": uploader,
+            "designer": designer,
+            "description": 'Manually added entry',
+            "image": image,
+            "format": "7",
+            "revision": "0",
+            "status": "0",
+            "size": 1,
+            "min-include-version": "",
+            "max-include-version": "",
+            "license": "",
+            "image-list": "",
+            "rating": "3"
+        }
+
+        with open('data/addons.json', 'w') as f:
+            json.dump(data, f, indent=2)
+
+        return await ctx.send('Successfully added entry.')
 
     return owner

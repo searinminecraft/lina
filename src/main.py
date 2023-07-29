@@ -26,6 +26,7 @@ import sys
 import time
 from utils.addonid_toname import addonid_toname
 import xml.etree.ElementTree as et
+import traceback
 
 load_dotenv()
 
@@ -47,14 +48,14 @@ async def friendrequestHandler():
     while True:
         log('friendreq', 'Checking for incoming friend requests.')
         try:
-            data = stk.request('POST', 'get-friends-list', f'userid={dotenv_values()["stk_userid"]}&token={dotenv_values()["stk_token"]}&visitingid={dotenv_values()["stk_userid"]}')
+            data = await stk.request('get-friends-list', f'userid={dotenv_values()["stk_userid"]}&token={dotenv_values()["stk_token"]}&visitingid={dotenv_values()["stk_userid"]}')
 
             for i in data:
                 if data[i]['is_pending'] == 'yes' and data[i]['is_asker'] == 'yes':
                     log('friendreq', f'Attempting to accept friend request of user {data[i]["user_name"]} ({data[i]["id"]})')
                     
                     try:
-                        stk.request('POST', 'accept-friend-request', f'userid={dotenv_values()["stk_userid"]}&token={dotenv_values()["stk_token"]}&friendid={data[i]["id"]}')
+                        stk.request('accept-friend-request', f'userid={dotenv_values()["stk_userid"]}&token={dotenv_values()["stk_token"]}&friendid={data[i]["id"]}')
                     except stk.STKError as e:
                         log('friendreq', f'Error on accept: {e}')
 
@@ -70,9 +71,9 @@ async def stkAuth():
     log('STK', f'Authenticating SuperTuxKart Account "{STK_USERNAME}"...', color.RED)
     
     try:
-        data = stk.request('POST', 'connect', f'username={STK_USERNAME}&password={STK_PASSWORD}&save_session=true')
+        data = await stk.request('connect', f'username={STK_USERNAME}&password={STK_PASSWORD}&save_session=true')
     except stk.STKError as e:
-        log('STK', f'Failed to authenticate STK Account "{STK_USERNAME}": {e.reason}. Quitting...', color.RED)
+        log('STK', f'Failed to authenticate STK Account "{STK_USERNAME}": {e}. Quitting...', color.RED)
         sys.exit(1)
 
     token = data.get('token')
@@ -125,9 +126,9 @@ async def updateaddondb():
 async def stkPoll():
     while True:
         try:
-            data = stk.request('POST', 'poll', f'userid={dotenv_values()["stk_userid"]}&token={dotenv_values()["stk_token"]}')
+            data = await stk.request('poll', f'userid={dotenv_values()["stk_userid"]}&token={dotenv_values()["stk_token"]}')
         except stk.STKError as e:
-            log('STK', f'STK poll request failed: {e.reason}. Attempting to reauthenticate.', color.RED)
+            log('STK', f'STK poll request failed: {e}. Attempting to reauthenticate.', color.RED)
             await stkAuth()
 
         await asyncio.sleep(60)
@@ -272,7 +273,7 @@ async def on_error(e: Exception, message: Message):
         return
 
     log('Commands', f'Error occured: {e}')
-
+    traceback.print_exc()
     await message.reply(embed=SendableEmbed(
         title = "I'm sorry! An error occured!",
         description = f'`{e}`',

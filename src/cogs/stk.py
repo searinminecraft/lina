@@ -137,7 +137,7 @@ def setup(client: commands.CommandsClient) -> commands.Cog:
         load_dotenv()
         log('STK', 'Retrieving top ranked players...')
 
-        data = stkhttp.request('POST', 'top-players', credentials)
+        data = await stkhttp.request('top-players', credentials)
 
         output = ''
         place = 1
@@ -157,17 +157,12 @@ def setup(client: commands.CommandsClient) -> commands.Cog:
     @stk.command('searchuser', 'Search for a user.')
     async def usersearch(ctx: commands.CommandContext, *, query: str):
         load_dotenv()
-        data = subprocess.run(['curl', '-sX', 'POST', '-d', f'userid={dotenv_values()["stk_userid"]}&token={dotenv_values()["stk_token"]}&search-string={query.lower()}', 'https://online.supertuxkart.net/api/v2/user/user-search'], stdout=subprocess.PIPE).stdout.decode('utf-8')
-        
-        root = et.fromstring(data)
+        data = await stkhttp.request('user-search', credentials + f'search-string={query}')
+    
         output = ''
 
-        if root.get('success') == 'no':
-            raise Exception(root.get('info'))
-
-
-        for _ in root[0].findall('user'):
-            output += f'* {_.get("user_name")} ({_.get("id")})\n'
+        for _ in data:
+            output += f'* {_} ({data[_]["id"]})\n'
 
         if len(output) > 2000:
             return await ctx.send('I couldn\'t fit all of it due to character limit.')
@@ -307,7 +302,11 @@ def setup(client: commands.CommandsClient) -> commands.Cog:
             **Revision**: {data[addonid]['revision']}
             **Status**: 0x{data[addonid]['status']}
             **Size (MB)**: {math.floor(int(data[addonid]['size']) / 1024000)}
-            **Rating**: {int(float(data[addonid]['rating']))}""",
+            **Rating**: {int(float(data[addonid]['rating']))}
+            
+            [[Download addon]]({data[addonid]['file']})
+            """,
+
             icon_url = data[addonid]['image'],
             color = accent
         ))
@@ -316,7 +315,7 @@ def setup(client: commands.CommandsClient) -> commands.Cog:
     async def friendslist(ctx: commands.CommandContext, userid: int = None):
         if userid is None:
             return await ctx.reply('Please provide a user id!')
-        data = stkhttp.request('POST', 'get-friends-list', f'{credentials}visitingid={userid}')
+        data = await stkhttp.request('get-friends-list', f'{credentials}visitingid={userid}')
 
         result = ''
 

@@ -22,7 +22,7 @@ def addonid_toname(x: str):
         case 'fortmagma': return 'Fort Magma'
         case 'gplose': return 'You lost? Too bad.'
         case 'gpwin': return 'Huh?'
-        case 'gran_paradiso_island': return 'Grand Paradiso Island'
+        case 'gran_paradiso_island': return 'Gran Paradiso Island'
         case 'hacienda': return 'Hacienda'
         case 'hole_drop': return 'Hole Drop'
         case 'icy_soccer_field': return 'Icy Soccer Field'
