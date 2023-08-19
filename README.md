@@ -1,7 +1,7 @@
-<img align='right' width=25% height=25% src='https://autumn.revolt.chat/avatars/dqr02Aw_bK1T3qQSAVdu3TK8l2fuuRh3QKeLV5jr81/received_685121879647575_1.jpeg'/>
-
 # This bot is currently undergoing a rewrite.
 *This bot is currently being rewritten, because it's a mess. I will upload the source code to another branch soon*™
+
+<img align='right' width=25% height=25% src='https://autumn.revolt.chat/avatars/dqr02Aw_bK1T3qQSAVdu3TK8l2fuuRh3QKeLV5jr81/received_685121879647575_1.jpeg'/>
 
 # lina
 A [Revolt](https://github.com/revoltchat) bot focused on SuperTuxKart, based on the code from [doingus](https://github.com/searinminecraft/doingus).
@@ -36,6 +36,6 @@ This bot relies on a SuperTuxKart account that is always online to retrieve data
 
 # Credits
 
-* [NobWow](https://github.com/NobWow) - For helping me with the code and mostly SQL stuff. Without him then this bot wouldn't have used databases for things like PokeMap.
-* dapdap - The author of the profile picture. Used with permission from her. [Original Image](https://autumn.revolt.chat/attachments/TNi4IUc87YKa3sVkKb8PR2lWp_SSbeX6rgSKExBc1X/received_685121879647575.jpeg)
+* [NobWow](https://github.com/NobWow) - For generously hosting this bot and all of my other bots ~~on his spare laptop~~. For helping me with the code and mostly SQL stuff. Without him then this bot wouldn't have used databases for things like PokeMap.
+* dapdap - My best friend, the author of the profile picture. Used with permission from her. [Original Image](https://autumn.revolt.chat/attachments/TNi4IUc87YKa3sVkKb8PR2lWp_SSbeX6rgSKExBc1X/received_685121879647575.jpeg)
 * ~~[kimden](https://github.com/kimden)~~ - ~~For hating on Revolt and the bot~~
