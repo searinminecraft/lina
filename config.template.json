@@ -1,0 +1,12 @@
+{
+  "token": "your token here",
+  "prefix": ["..", "&"],
+  "username": "stk_username",
+  "password": "stkpassword",
+  "accentcolor": "#fbce3a",
+  "verbose_http": false,
+  "server_fetch_interval": 5,
+  "user_ptrack_max": 10,
+  "postgres_conn": "postgresql:///yourdb",
+  "embed_icon": "https://autumn.revolt.chat/attachments/d9qHDeLf4eWldotZlkii1-ay-b6Df3rCWKB7wSndut/supertuxkart_32.png"
+}
