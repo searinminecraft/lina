@@ -1,5 +1,5 @@
 # This bot is currently undergoing a rewrite.
-*This bot is currently being rewritten, because it's a mess. I will upload the source code to another branch soon*™
+This bot is currently being rewritten, because it's a mess. You can see the rewrite code in the `rewrite` branch.
 
 <img align='right' width=25% height=25% src='https://autumn.revolt.chat/avatars/dqr02Aw_bK1T3qQSAVdu3TK8l2fuuRh3QKeLV5jr81/received_685121879647575_1.jpeg'/>
 
@@ -28,7 +28,7 @@ A [Revolt](https://github.com/revoltchat) bot focused on SuperTuxKart, based on 
 * Easy configuration though a configuration file or server commands
 * Opening the bot to the general public (a.k.a it can invited to groups, servers, etc.)
 * Caching player names (so that people can type the username instead of the user ID. It works by taking the usernames from various sources such as user search results and online players)
-* Player tracking (a feature that was widely used the SuperTuxKart Discord Server to allow for tracking player activity via DMs. It used the [Snakebot](https://github.com/NobWow/snakebot) Discord bot via an [extension](https://gist.github.com/NobWow/6578943f77d7d7cbf3b227877a480860))
+* ~~Player tracking (a feature that was widely used the SuperTuxKart Discord Server to allow for tracking player activity via DMs. It used the [Snakebot](https://github.com/NobWow/snakebot) Discord bot via an [extension](https://gist.github.com/NobWow/6578943f77d7d7cbf3b227877a480860))~~ (Implemented in rewrite)
 
 # Disclaimer
 
@@ -37,5 +37,5 @@ This bot relies on a SuperTuxKart account that is always online to retrieve data
 # Credits
 
 * [NobWow](https://github.com/NobWow) - For generously hosting this bot and all of my other bots ~~on his spare laptop~~. For helping me with the code and mostly SQL stuff. Without him then this bot wouldn't have used databases for things like PokeMap.
-* dapdap - My best friend, the author of the profile picture. Used with permission from her. [Original Image](https://autumn.revolt.chat/attachments/TNi4IUc87YKa3sVkKb8PR2lWp_SSbeX6rgSKExBc1X/received_685121879647575.jpeg)
+* dapdap - My best friend, the author of the profile picture. Used with permission from her[.](https://www.facebook.com/profile.php?id=100070729325593) [Original Image](https://autumn.revolt.chat/attachments/TNi4IUc87YKa3sVkKb8PR2lWp_SSbeX6rgSKExBc1X/received_685121879647575.jpeg)
 * ~~[kimden](https://github.com/kimden)~~ - ~~For hating on Revolt and the bot~~
