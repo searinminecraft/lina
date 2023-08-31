@@ -15,6 +15,7 @@ We collect the required data in order for it to work:
 * User Country (if applicable)
 * Server Name
 * Server Country
+* The list of players you're tracking
 
 We store this data to a PostgreSQL database in order to retrieve and store player activity data (which makes player tracking and `stk-seen` to work). We will not use this data for any malicious intent, unless you were to for example, stalk a person.
 
@@ -33,9 +34,9 @@ The server's IP Address is shown in the `online` command, which may raise concer
 If you believe that linaSTK raises concerns about your privacy and data rights, you want to request data associated with you be deleted, or have any questions or other concerns, you may contact me using one of the communication methods below.
 
 ## Contact
-Discord: searinminecraft
-Revolt (preferred, but please use the `#Off-Topic Unbridged` channel): https://rvlt.gg/1Rw7Nevx
-Email: linamoonlight@transgender.army
+* Discord: searinminecraft
+* Revolt (preferred, but please use the `#Off-Topic Unbridged` channel): https://rvlt.gg/1Rw7Nevx
+* Email: linamoonlight@transgender.army
 
 
 ###### Last updated: 2023-08-31
