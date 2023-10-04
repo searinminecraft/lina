@@ -1,7 +1,7 @@
 # This bot is currently undergoing a rewrite.
 This bot is currently being rewritten, because it's a mess. You can see the rewrite code in the `rewrite` branch.
 
-<img align='right' width=25% height=25% src='https://autumn.revolt.chat/avatars/dqr02Aw_bK1T3qQSAVdu3TK8l2fuuRh3QKeLV5jr81/received_685121879647575_1.jpeg'/>
+<img align='right' width=25% height=25% src='https://autumn.revolt.chat/avatars/5YHRpsn89R4NK0P--iq_FFRCOiMZ1M8fGJWN0kmrJh/Untitled4_20231004182737.png'/>
 
 # lina
 A [Revolt](https://github.com/revoltchat) bot focused on SuperTuxKart, based on the code from [doingus](https://github.com/searinminecraft/doingus).
@@ -16,7 +16,7 @@ A [Revolt](https://github.com/revoltchat) bot focused on SuperTuxKart, based on 
 * A game that makes you guess what addon it is based on the image it gives you
 * Get player rankings (Only top 10 players for now)
 * "PokeMap" system: A Pokemon-like mechanic where you "catch" and collect addons
-* Query when the user was last online or detected (Inspired by NobWow's stk-seen command) (partially implemented, it does not update information yet.)
+* Query when the user was last online or detected (Inspired by NobWow's stk-seen command) (fully Implemented on rewrite)
 * Get a player's friends list (Only using User IDs for now)
 
 ## How to set up
@@ -37,5 +37,4 @@ This bot relies on a SuperTuxKart account that is always online to retrieve data
 # Credits
 
 * [NobWow](https://github.com/NobWow) - For generously hosting this bot and all of my other bots ~~on his spare laptop~~. For helping me with the code and mostly SQL stuff. Without him then this bot wouldn't have used databases for things like PokeMap.
-* dapdap - My best friend, the author of the profile picture. Used with permission from her[.](https://www.facebook.com/profile.php?id=100070729325593) [Original Image](https://autumn.revolt.chat/attachments/TNi4IUc87YKa3sVkKb8PR2lWp_SSbeX6rgSKExBc1X/received_685121879647575.jpeg)
 * ~~[kimden](https://github.com/kimden)~~ - ~~For hating on Revolt and the bot~~
