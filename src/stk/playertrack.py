@@ -297,5 +297,10 @@ async def triggerDiff(tree: et.Element):
     except Exception as e:
         log("PlayerTrack", f"Unable to save player info to DB: {e.__class__.__name__}: {e}")
 
-    globals.onlinePlayers = onlinePlayers
+    if getConfig("debug_noonline"):
+        log("Debug", "not saving online players to globals")
+        pass
+    else:
+        globals.onlinePlayers = onlinePlayers
+        
     prevTree = tree

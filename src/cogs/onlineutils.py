@@ -10,7 +10,9 @@ from stk.api import user
 from utils.flagconverter import flagconverter
 from utils.bigip import bigip
 from config import getConfig
+from log import log
 import globals
+import random
 
 def setup(client):
 
@@ -53,7 +55,7 @@ def setup(client):
 
         for p in data[0]:
 
-            result += f"{place}. {p.get('username')} -- {p.get('scores')} (Max {p.get('max-scores')})\n"
+            result += f"{place}. {p.get('username')} — {round(float(p.get('scores')), ndigits=2)} (Max: {round(float(p.get('max-scores')), ndigits=2)})\n"
             place += 1
 
         return await ctx.reply(embed=SendableEmbed(
@@ -84,7 +86,11 @@ def setup(client):
             if len(players) == 0:
                 continue
 
-            result += f"\n{':lock: ' if password == 1 else ''}**{serverName} ({bigip(ip)}:{port})**: {len(players)} player{'s' if len(players) > 1 else ''} - {currentTrack if currentTrack != '' else 'None'}:\n"
+            if bigip(ip) in getConfig("ip_blacklist"):
+                log("Online", f"Warning: Skipping {serverName} because it's IP ({bigip(ip)}) is blacklisted.")
+                continue
+
+            result += f"\n{'' if password == 1 else '*'}*{serverName} ({bigip(ip)}:{port})*{'' if password == 1 else '*'}: {len(players)} player{'s' if len(players) > 1 else ''} - {currentTrack if currentTrack != '' else 'None'}:\n"
 
             for player in players:
 
@@ -95,6 +101,38 @@ def setup(client):
 
             if not (currentPlayers - len(players) <= 0):
                 result += f"+{currentPlayers - len(players)}\n"
+
+        if result == "" or getConfig('debug_noonline'):
+
+            if random.randint(0, 5) == 3:
+                return await ctx.send(embed=SendableEmbed(
+                    title = "Public Offline",
+                    description = "yes, read the title",
+                    color = globals.accentcolor,
+                    icon_url = getConfig("embed_icon")
+                ))
+
+            return await ctx.send(embed=SendableEmbed(
+                title = "Public Online",
+                description = random.choice([
+                    "Nobody is online... nya~",
+                    "Huh? I don't see anyone playing on a server. Maybe check again later?",
+                    "Nobody is online, but that's not guaranteed because there might be players not showing up the API.",
+                    "Awwww! I guess no one's around to play!",
+                    "There's nobody online!!!11",
+                    "Nobody's playing. Maybe you can join a server and people will suddenly join.",
+                    "No one's online. Probably a geography issue for you.",
+                    "Error 404 - Players not found.",
+                    "Nobody is online. Have this instead: OwO",
+                    "Exception occured: KeyError: \"players\"",
+                    "(weird silence)",
+                    "See? People are touching grass and you should do the same!",
+                    "Nobody's online. Go touch some grass instead.",
+                    "More like **public offline**"
+                ]),
+                color = globals.accentcolor,
+                icon_url = getConfig("embed_icon")
+            ))
 
         return await ctx.reply(embed=SendableEmbed(
             title = "Public Online",

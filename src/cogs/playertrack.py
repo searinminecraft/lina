@@ -90,18 +90,20 @@ Last seen on: {flagconverter(str(data["server_country"]))} **{data["server_name"
                     color = globals.accentcolor
                 ))
 
-        if len(data["usernames"]) >= getConfig("user_ptrack_max"):
+        try:
+            if len(data["usernames"]) >= getConfig("user_ptrack_max"):
         
-            title = "Maximum amount of tracked players exceeded"
+                title = "Maximum amount of tracked players exceeded"
 
-            if random.randint(0, 16) == 8:
-                title = "You like stalking people eh?"
+                if random.randint(0, 16) == 8:
+                    title = "You like stalking people eh?"
 
-            return await ctx.reply(embed=SendableEmbed(
-                title = title,
-                description = f"You have reached the maximum amount of players you can track. You can only track up to **{getConfig('user_ptrack_max')}** players.",
-                color = globals.accentcolor
-            ))
+                return await ctx.reply(embed=SendableEmbed(
+                    title = title,
+                    description = f"You have reached the maximum amount of players you can track. You can only track up to **{getConfig('user_ptrack_max')}** players.",
+                    color = globals.accentcolor
+                ))
+        except: pass
 
         await globals.pgconn.execute("""
         INSERT INTO lina_ptrack VALUES ($1, $2) 

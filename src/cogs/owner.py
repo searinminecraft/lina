@@ -54,7 +54,7 @@ def setup(client: CommandsClient) -> Cog:
                 config.setConfig("password", password)
             except STKHTTPError as e:
                 return await msg.edit(embed=SendableEmbed(
-                    description = "Unable to login! {e}",
+                    description = f"Unable to login! {e}",
                     color = globals.accentcolor
                 ))
             except Exception as e:
@@ -77,5 +77,55 @@ def setup(client: CommandsClient) -> Cog:
                 color = globals.accentcolor
             ))
 
+    @is_owner()
+    @_.command('loadcog', 'Loads a cog.')
+    async def loadcog(ctx: CommandContext, cog: str = None):
+        if cog is None:
+            return await ctx.reply(embed=SendableEmbed(
+                description = "Specify a cog.",
+                color = globals.accentcolor
+            ))
+
+        client.add_extension(f'cogs.{cog}')
+        await ctx.reply(embed=SendableEmbed(
+            description = f'Successfully loaded cog {cog}',
+            color = globals.accentcolor
+        ))
+
+    @is_owner()
+    @_.command('unloadcog', 'Unloads a cog.')
+    async def unloadcog(ctx: CommandContext, cog: str = None):
+        if cog is None:
+            return await ctx.reply(embed=SendableEmbed(
+                description = 'Please, specify a cog!',
+                color = globals.accentcolor
+            ))
+
+        if cog == 'owner':
+            return await ctx.reply(embed=SendableEmbed(
+                description = 'Are u stupid?',
+                color = globals.accentcolor
+            ))
+
+        client.remove_extension(f'cogs.{cog}')
+        await ctx.reply(embed=SendableEmbed(
+            description = f'Successfully unloaded cog {cog}',
+            color = globals.accentcolor
+        ))
+
+    @is_owner()
+    @_.command('reloadcog', 'Reloads a cog.')
+    async def reloadcog(ctx: CommandContext, cog: str = None):
+        if cog is None:
+            return await ctx.reply(embed=SendableEmbed(
+                description = 'Please, specify a cog!',
+                color = globals.accentcolor
+            ))
+
+        client.reload_extension(f'cogs.{cog}')
+        await ctx.reply(embed=SendableEmbed(
+            description = f'Successfully reloaded cog {cog}',
+            color = globals.accentcolor
+        ))
 
     return _

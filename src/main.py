@@ -3,6 +3,7 @@ from voltage import (
     SendableEmbed,
     Message
 )
+from voltage.errors import VoltageException
 import globals
 
 globals.init()
@@ -12,6 +13,7 @@ from stk.api.user import clientQuit, disconnect
 from stk.http import STKHTTPError
 from stk.polling import poll
 from stk.onlineloop import onlineloop
+from status import statusloop
 from log import log
 import config
 from version import version
@@ -46,21 +48,21 @@ async def on_ready():
         log("DB", f"Connected to {config.getConfig('postgres_conn')}!")
         globals.prepared_select = await globals.pgconn.prepare(
 """
-SELECT username, LOWER(country) AS country, date, server_name, LOWER(server_country) AS server_country FROM stk_seen2 WHERE
+SELECT username, LOWER(country) AS country, date, server_name, LOWER(server_country) AS server_country FROM stk_seen WHERE
 username ILIKE $1 GROUP BY username FETCH FIRST 1 ROW ONLY;
 """
 )
 
         globals.prepared_addc = await globals.pgconn.prepare(
 """
-INSERT INTO stk_seen2 (username, date, server_name, server_country) VALUES ($1, now() at time zone 'utc', $2, lower($3))
+INSERT INTO stk_seen (username, date, server_name, server_country) VALUES ($1, now() at time zone 'utc', $2, lower($3))
 ON CONFLICT (username) DO UPDATE SET date = now() at time zone 'utc', server_name = $2, server_country = lower($3);
 """
 )
 
         globals.prepared_add = await globals.pgconn.prepare(
 """
-INSERT INTO stk_seen2 (username, country, date, server_name, server_country) VALUES ($1, lower($2), now() at time zone 'utc', $3, lower($4))
+INSERT INTO stk_seen (username, country, date, server_name, server_country) VALUES ($1, lower($2), now() at time zone 'utc', $3, lower($4))
 ON CONFLICT (username) DO UPDATE SET country = lower($2), date = now() at time zone 'utc', server_name = $3, server_country = lower($4);
 """
 )
@@ -103,10 +105,11 @@ ON CONFLICT (username) DO UPDATE SET country = lower($2), date = now() at time z
 
     global pollLoop
     global onlineLoop
+    global statusLoop
     
     pollLoop = asyncio.create_task(poll())
     onlineLoop = asyncio.create_task(onlineloop())
-
+    statusLoop = asyncio.create_task(statusloop())
 
 @client.error('message')
 async def on_error(error: Exception, message: Message):
@@ -120,19 +123,10 @@ async def on_error(error: Exception, message: Message):
             color = globals.accentcolor
         ))
 
-async def terminate():
-    pollLoop.cancel()
-    onlineLoop.cancel()
+    if isinstance(error, VoltageException):
+        return await message.reply(embed=SendableEmbed(
+            description = f"Library returned error: {error.__class__.__name__}: {error}",
+            color = globals.accentcolor
+        ))
 
-while True:
-    try:
-        client.run(config.getConfig('token'))
-        asyncio.run(terminate())
-    except KeyboardInterrupt:
-        log("Bot", "Interrupt.")
-        asyncio.run(terminate())
-        asyncio.run(clientQuit())
-        asyncio.run(disconnect())
-        sys.exit(1)
-    except Exception as e:
-        log("Init", f"Error occured! {e.__class__.__name__}: {e}")
+client.run(config.getConfig('token'), banner=False)

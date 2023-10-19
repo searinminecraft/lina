@@ -1,4 +1,5 @@
 import config
+import datetime
 
 def init():
     global username
@@ -20,6 +21,8 @@ def init():
 
     global onlinePlayers
 
+    global startTime
+
     username = config.getConfig('username')
     password = config.getConfig('password')
     accentcolor = config.getConfig('accentcolor')
@@ -35,3 +38,4 @@ def init():
     prepared_addc = None
     prepared_select = None
     onlinePlayers = {}
+    startTime = datetime.datetime.now()

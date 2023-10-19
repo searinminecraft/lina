@@ -8,5 +8,7 @@
   "server_fetch_interval": 5,
   "user_ptrack_max": 10,
   "postgres_conn": "postgresql:///yourdb",
-  "embed_icon": "https://autumn.revolt.chat/attachments/d9qHDeLf4eWldotZlkii1-ay-b6Df3rCWKB7wSndut/supertuxkart_32.png"
+  "embed_icon": "https://autumn.revolt.chat/attachments/d9qHDeLf4eWldotZlkii1-ay-b6Df3rCWKB7wSndut/supertuxkart_32.png",
+  "ip_blacklist": [],
+  "debug_noonline": false
 }

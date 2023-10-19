@@ -6,13 +6,18 @@ import config
 
 import globals
 
+from voltage import __version__ as voltageversion
+from version import version
+
+USERAGENT = f"Mozilla/5.0 (compatible; Voltage/{voltageversion}) linaSTK/{version} +https://github.com/searinminecraft/lina"
+
 headers_post = {
     "Content-Type": "application/x-www-form-urlencoded",
-    "User-Agent": "SuperTuxKart/1.4 (Linux)"
+    "User-Agent": USERAGENT
 }
 
 headers_get = {
-    "User-Agent": "SuperTuxKart/1.4 (Linux)"
+    "User-Agent": USERAGENT
 }
 
 base_url = "https://online.supertuxkart.net"
