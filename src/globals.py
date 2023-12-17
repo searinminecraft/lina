@@ -1,6 +1,7 @@
 import config
 import datetime
 
+
 def init():
     global username
     global password
@@ -11,7 +12,7 @@ def init():
     global client
 
     global pgconn
-   
+
     global prepared_add
     global prepared_addc
     global prepared_ptrack_upd
@@ -20,8 +21,10 @@ def init():
     global prepared_select
 
     global onlinePlayers
+    global addons
 
     global startTime
+    global version
 
     username = config.getConfig('username')
     password = config.getConfig('password')
@@ -38,4 +41,6 @@ def init():
     prepared_addc = None
     prepared_select = None
     onlinePlayers = {}
+    addons = {}
     startTime = datetime.datetime.now()
+    version = "1.0-release"

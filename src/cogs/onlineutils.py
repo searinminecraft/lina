@@ -14,11 +14,14 @@ from log import log
 import globals
 import random
 
+
 def setup(client):
 
     _ = Cog("Online", "")
-    
-    @_.command(description='Search for a user (max 50 results)', aliases=['su'])
+
+    @_.command(
+        description='Search for a user (max 50 results)',
+        aliases=['su'])
     async def searchuser(ctx: CommandContext, query: str):
 
         mdEscape = str.maketrans({
@@ -28,24 +31,24 @@ def setup(client):
         data = await user.userSearch(query)
 
         result = ""
-        
+
         for i in data[0]:
             result += f"{i.get('user_name').translate(mdEscape)} ({i.get('id')}) \n"
 
         if result == "":
             return await ctx.reply(embed=SendableEmbed(
-                description = "No results :(",
-                color = globals.accentcolor
+                description="No results :(",
+                color=globals.accentcolor
         ))
 
 
         await ctx.reply(embed=SendableEmbed(
-            title = f"Search results for {query}",
-            description = result,
-            color = globals.accentcolor
+            title=f"Search results for {query}",
+            description=result,
+            color=globals.accentcolor
         ))
 
-    @_.command(description = "Get top players.")
+    @_.command(description="Get top players.")
     async def topplayers(ctx: CommandContext):
 
         data = await user.topPlayers()
@@ -59,9 +62,9 @@ def setup(client):
             place += 1
 
         return await ctx.reply(embed=SendableEmbed(
-            title = "Top 10 ranked players",
-            description = result,
-            color = globals.accentcolor
+            title="Top 10 ranked players",
+            description=result,
+            color=globals.accentcolor
         ))
 
     @_.command(description="See online players")
@@ -72,11 +75,11 @@ def setup(client):
 
         for i in range(len(data[0])):
             serverInfo = data[0][i][0]
-            serverName = serverInfo.attrib["name"].replace('\r', '').replace('\n', '')
-            serverCountry = serverInfo.attrib["country_code"]
+            serverName = serverInfo.attrib["name"] \
+                .replace('\r', '') \
+                .replace('\n', '')
             currentTrack = serverInfo.attrib["current_track"]
             currentPlayers = int(serverInfo.attrib["current_players"])
-            maxPlayers = int(serverInfo.attrib["max_players"])
             password = int(serverInfo.attrib["password"])
             ip = int(serverInfo.attrib["ip"])
             port = int(serverInfo.attrib["port"])
@@ -87,7 +90,8 @@ def setup(client):
                 continue
 
             if bigip(ip) in getConfig("ip_blacklist"):
-                log("Online", f"Warning: Skipping {serverName} because it's IP ({bigip(ip)}) is blacklisted.")
+                log("Online",
+                    f"Warning: Skipping {serverName} because it's IP ({bigip(ip)}) is blacklisted.")
                 continue
 
             result += f"\n{'' if password == 1 else '*'}*{serverName} ({bigip(ip)}:{port})*{'' if password == 1 else '*'}: {len(players)} player{'s' if len(players) > 1 else ''} - {currentTrack if currentTrack != '' else 'None'}:\n"
@@ -106,10 +110,10 @@ def setup(client):
 
             if random.randint(0, 5) == 3:
                 return await ctx.send(embed=SendableEmbed(
-                    title = "Public Offline",
-                    description = "yes, read the title",
-                    color = globals.accentcolor,
-                    icon_url = getConfig("embed_icon")
+                    title="Public Offline",
+                    description="yes, read the title",
+                    color=globals.accentcolor,
+                    icon_url=getConfig("embed_icon")
                 ))
 
             return await ctx.send(embed=SendableEmbed(
@@ -130,15 +134,14 @@ def setup(client):
                     "Nobody's online. Go touch some grass instead.",
                     "More like **public offline**"
                 ]),
-                color = globals.accentcolor,
-                icon_url = getConfig("embed_icon")
+                color=globals.accentcolor,
+                icon_url=getConfig("embed_icon")
             ))
 
         return await ctx.reply(embed=SendableEmbed(
-            title = "Public Online",
-            description = result,
-            color = globals.accentcolor,
-            icon_url = getConfig("embed_icon")
+            title="Public Online",
+            description=result,
+            color=globals.accentcolor,
+            icon_url=getConfig("embed_icon")
         ))
     return _
-        

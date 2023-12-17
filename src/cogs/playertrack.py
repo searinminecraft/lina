@@ -4,7 +4,7 @@ from voltage.ext.commands import (
         CommandContext
 )
 
-from voltage import SendableEmbed
+from voltage import SendableEmbed, File
 
 from stk.api import *
 from log import log
@@ -16,11 +16,15 @@ import time
 import math
 import random
 
+
 def setup(client: CommandsClient) -> Cog:
 
-    _ = Cog('stk-player-track', 'Reimplemention of the player tracking module from snakebot')
+    _ = Cog('stk-player-track',
+            'Reimplemention of the player tracking module from snakebot')
 
-    @_.command(name="seen", description = "See when the user was last detected/online", aliases=["stk-seen"])
+    @_.command(name="seen",
+               description="See when the user was last detected/online",
+               aliases=["stk-seen"])
     async def stk_seen(ctx: CommandContext, player: str = None):
         sql_esc = str.maketrans({
             "%": "\\%",
@@ -30,43 +34,46 @@ def setup(client: CommandsClient) -> Cog:
 
         if player:
 
-            data = await globals.prepared_select.fetchrow(player.translate(sql_esc) + "%")
+            data = await globals.prepared_select.fetchrow(
+                player.translate(sql_esc) + "%")
 
             if data is None:
                 log('STKSeen', f'Player {player} not found in DB')
 
                 return await ctx.reply(embed=SendableEmbed(
-                    title = 'Unknown player',
-                    description = f"I have not seen this player before.\nCheck the spelling or track them by executing `{ctx.prefix}trackuser {player}`",
-                    color = globals.accentcolor
+                    title='Unknown player',
+                    description=f"I have not seen this player before.\nCheck the spelling or track them by executing `{ctx.prefix}trackuser {player}`",
+                    color=globals.accentcolor
                 ))
             else:
                 log('STKSeen', f'Player {player} found! Result = {data["username"]}')
                 if data["username"] in globals.onlinePlayers:
                     return await ctx.reply(embed=SendableEmbed(
-                        title = f"Information for user {flagconverter(str(data['country']))} {data['username']}",
-                        description = f"""{flagconverter(str(data["country"]))} {data["username"]} is **currently online**.
+                        title=f"Information for user {flagconverter(str(data['country']))} {data['username']}",
+                        description=f"""{flagconverter(str(data["country"]))} {data["username"]} is **currently online**.
 
 Currently in server: {flagconverter(globals.onlinePlayers[data["username"]].attrib["country_code"])} **{globals.onlinePlayers[data["username"]].attrib["name"]}**
 """,
-                        color = globals.accentcolor
+                        color=globals.accentcolor
                     ))
                 else:
                     return await ctx.reply(embed=SendableEmbed(
-                        title = f"Information for user {flagconverter(str(data['country']))} {data['username']}",
-                        description = f"""{flagconverter(str(data["country"]))} {data["username"]} is **offline**.
+                        title=f"Information for user {flagconverter(str(data['country']))} {data['username']}",
+                        description=f"""{flagconverter(str(data["country"]))} {data["username"]} is **offline**.
 
 Date last seen: <t:{math.floor(data["date"].timestamp()) - time.timezone}:F>, <t:{math.floor(data["date"].timestamp()) - time.timezone}:R>
 Last seen on: {flagconverter(str(data["server_country"]))} **{data["server_name"]}**""",
-                        color = globals.accentcolor
+                        color=globals.accentcolor
                     ))
         else:
             return await ctx.reply(embed=SendableEmbed(
-                description = "Please specify a player name. (If partial, will result in closely matching one.)",
-                color = globals.accentcolor
+                description="Please specify a player name. (If partial, will result in closely matching one.)",
+                color=globals.accentcolor
             ))
 
-    @_.command(name="trackuser", description = "Track a user privately. Will notify you in Direct Messages if the specified player(s) join or leave a server.", aliases=["stk-trackuser-dm"])
+    @_.command(name="trackuser",
+               description="Track a user privately. Will notify you in Direct Messages if the specified player(s) join or leave a server.",
+               aliases=["stk-trackuser-dm"])
     async def stk_trackuser(ctx: CommandContext, player: str = None):
         
         if player is None:
@@ -78,7 +85,7 @@ Last seen on: {flagconverter(str(data["server_country"]))} **{data["server_name"
         if ctx.author.id == "01FHGJ3NPP7XANQQH8C2BE44ZY":
             # Force the discord peasants to use Revolt
 
-            return await ctx.reply("oh u want 2 track a player? use [revolt](https://revolt.chat) lmao")
+            return await ctx.reply(attachment=File(f=open("assets/cyberbutrevolt.png", "rb").read(), filename="cyberbutrevolt.png"))
 
         data = await globals.prepared_ptrack_query.fetchrow(ctx.author.id)
 

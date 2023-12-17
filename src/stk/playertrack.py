@@ -13,6 +13,7 @@ from voltage import DMChannel, SendableEmbed
 prevTree: et.Element = None
 onlinePlayers = {}
 
+
 async def ptrack_NotifyUserJoin(userId, username, country, server, serverCountry):
 
     client: CommandsClient = globals.client
@@ -21,18 +22,22 @@ async def ptrack_NotifyUserJoin(userId, username, country, server, serverCountry
         dm = await client.http.open_dm(userId)
         channel = DMChannel(dm, client.cache)
 
-        await channel.send(f"$% {flagconverter(country)} {username} joined a server %$", embed=SendableEmbed(
-            title = "STK Player Tracker",
-            description = f"""{flagconverter(country)} {username} joined a server
+        await channel.send(
+            f"$% {flagconverter(country)} {username} joined a server %$",
+            embed=SendableEmbed(
+                title="STK Player Tracker",
+                description=f"""{flagconverter(country)} {username} joined a server
 
 Server: {flagconverter(serverCountry)} {server}
             """,
-            color = globals.accentcolor,
-            icon_url = getConfig("embed_icon")
-        ))
+                color=globals.accentcolor,
+                icon_url=getConfig("embed_icon")
+            ))
 
     except Exception as e:
-        log("ptrackNotify", f"Unable to notify user {userId}: {e.__class__.__name__}: {e}")
+        log("ptrackNotify",
+            f"Unable to notify user {userId}: {e.__class__.__name__}: {e}")
+
 
 async def ptrack_NotifyUserLeave(userId, username, country, server, serverCountry):
 
@@ -42,18 +47,21 @@ async def ptrack_NotifyUserLeave(userId, username, country, server, serverCountr
         dm = await client.http.open_dm(userId)
         channel = DMChannel(dm, client.cache)
 
-        await channel.send(f"$% {flagconverter(country)} {username} left %$", embed=SendableEmbed(
-            title = "STK Player Tracker",
-            description = f"""{flagconverter(country)} {username} left
+        await channel.send(
+            f"$% {flagconverter(country)} {username} left %$",
+            embed=SendableEmbed(
+                title="STK Player Tracker",
+                description=f"""{flagconverter(country)} {username} left
 
 Server: {flagconverter(serverCountry)} {server}
             """,
-            color = globals.accentcolor,
-            icon_url = getConfig("embed_icon")
-        ))
+                color=globals.accentcolor,
+                icon_url=getConfig("embed_icon")
+            ))
 
     except Exception as e:
-        log("ptrackNotify", f"Unable to notify user {userId}: {e.__class__.__name__}: {e}")
+        log("ptrackNotify",
+            f"Unable to notify user {userId}: {e.__class__.__name__}: {e}")
 
 
 async def triggerDiff(tree: et.Element):
@@ -75,12 +83,12 @@ async def triggerDiff(tree: et.Element):
     xmlServersDeleted = []
 
     for i in range(len(tree[0])):
-        
+
         _id = int(tree[0][i][0].attrib["id"])
 
         if _id in srvCreated:
 
-            log("PlayerTrack", f"New server created: %s (%s) with id %d and address %s:%d" % (
+            log("PlayerTrack", "New server created: %s (%s) with id %d and address %s:%d" % (
                 tree[0][i][0].attrib['name'],
                 tree[0][i][0].attrib['country_code'],
                 int(tree[0][i][0].attrib['id']),
@@ -89,7 +97,7 @@ async def triggerDiff(tree: et.Element):
                 ))
 
             playersJoined = tree[0][i][1]
-            
+
             for player in playersJoined:
 
                 username = player.attrib["username"]
@@ -97,7 +105,8 @@ async def triggerDiff(tree: et.Element):
                 serverInfo = tree[0][i][0]
                 serverName = serverInfo.attrib["name"]
                 serverCountry = serverInfo.attrib['country_code']
-                playersToInsert.append((username, country, serverName, serverCountry))
+                playersToInsert.append((username, country,
+                                        serverName, serverCountry))
 
                 if username not in onlinePlayers:
                     onlinePlayers[username] = serverInfo
@@ -105,18 +114,20 @@ async def triggerDiff(tree: et.Element):
             xmlServersCreated.append(tree[0][i])
 
     for i in range(len(prevTree[0])):
-        
+
         _id = int(prevTree[0][i][0].attrib["id"])
 
         if _id in srvDeleted:
 
-            log("PlayerTrack", f"Server deleted: %s (%s) with id %d and address %s:%d" % (
+            log("PlayerTrack", "Server deleted: %s (%s) with id %d and address %s:%d" % (
                 prevTree[0][i][0].attrib['name'],
                 prevTree[0][i][0].attrib['country_code'],
                 int(prevTree[0][i][0].attrib['id']),
                 bigip(int(prevTree[0][i][0].attrib['ip'])),
                 int(prevTree[0][i][0].attrib['port'])
                 ))
+
+            xmlServersDeleted.append(tree[0][i])
 
             playersLeft = prevTree[0][i][1]
 
@@ -126,7 +137,9 @@ async def triggerDiff(tree: et.Element):
                 serverName = serverInfo.attrib['name']
                 serverCountry = serverInfo.attrib['country_code']
 
-                playersToInsertnocc.append((username, serverName, serverCountry))
+                playersToInsertnocc.append((username,
+                                            serverName,
+                                            serverCountry))
                 if username in onlinePlayers:
                     del onlinePlayers[username]
 
@@ -142,12 +155,13 @@ async def triggerDiff(tree: et.Element):
             _id_prev = int(prevTree[0][i + offset][0].attrib['id'])
 
         except IndexError:
-            log("PlayerTrack","Bad index: prevTree[0][%s][0] is out of boundaries, offset %s, i=%s, len(tree[0]) = %s, len(prevTree[0] = %s)" % (
-                i + offset,
-                offset,
-                i,
-                len(tree[0]),
-                len(prevTree[0])
+            log("PlayerTrack",
+                "Bad index: prevTree[0][%s][0] is out of boundaries, offset %s, i=%s, len(tree[0]) = %s, len(prevTree[0] = %s)" % (
+                    i + offset,
+                    offset,
+                    i,
+                    len(tree[0]),
+                    len(prevTree[0])
                 ))
             continue
 
@@ -164,7 +178,8 @@ async def triggerDiff(tree: et.Element):
                     pairs[tree[0][i]] = prevTree[0][i + offset]
                     break
                 else:
-                    log("PlayerTrack", "Failed to find an offset at _id_next %s" % _id_next)
+                    log("PlayerTrack",
+                        "Failed to find an offset at _id_next %s" % _id_next)
 
     for pair in pairs:
         oldServerInfo = pairs[pair][0]
@@ -194,10 +209,11 @@ async def triggerDiff(tree: et.Element):
                         serverCTrack
                     ))
                 elif not serverCTrack:
-                    log("PlayerTrack" ,"Stub: Game ended at %s %s" % (
-                        serverInfo.attrib['name'],
-                        serverInfo.attrib['id']
-                    ))
+                    log("PlayerTrack",
+                        "Stub: Game ended at %s %s" % (
+                            serverInfo.attrib['name'],
+                            serverInfo.attrib['id']
+                        ))
         diff_attrib = set()
         for attrib in ('max_players',
                        'game_mode',
@@ -206,7 +222,8 @@ async def triggerDiff(tree: et.Element):
                 diff_attrib.add(attrib)
 
         if diff_attrib:
-            log("PlayerTrack", "Stub: Config difference detected at %s: %s" % (serverInfo.attrib['name'], diff_attrib))
+            log("PlayerTrack", "Stub: Config difference detected at %s: %s"
+                % (serverInfo.attrib['name'], diff_attrib))
 
         playersNew = set(str(x.attrib['username']) for x in serverPlayers)
         playersOld = set(str(x.attrib['username']) for x in oldServerPlayers)
@@ -216,7 +233,6 @@ async def triggerDiff(tree: et.Element):
         for i in range(len(serverPlayers)):
             username = serverPlayers[i].attrib['username']
             userCountryCode = serverPlayers[i].attrib['country-code'].lower() if 'country-code' in serverPlayers[i].attrib else ''
-            userScore = float(serverPlayers[i].attrib['scores'] if 'scores' in serverPlayers[i].attrib else 0.0)
 
             if username in playersJoined:
                 if 'country-code' in serverPlayers[i].attrib:
@@ -239,21 +255,24 @@ async def triggerDiff(tree: et.Element):
 
                     data = await globals.prepared_ptrack_query.fetchrow(id)
 
-                    if data is None: continue
+                    if data is None:
+                        continue
 
                     if username in data["usernames"]:
-                        asyncio.create_task(ptrack_NotifyUserJoin(id, username, userCountryCode, serverName, serverCountry))
+                        asyncio.create_task(
+                            ptrack_NotifyUserJoin(id, username,
+                                                  userCountryCode,
+                                                  serverName, serverCountry))
 
         for i in range(len(oldServerPlayers)):
             if i >= len(oldServerPlayers):
-                log("PlayerTrack", "Impossible happened: iteration %s is over oldServerPlayers length: %s" % (
-                    i, len(oldServerPlayers)
-                    ))
+                log("PlayerTrack",
+                    "Impossible happened: iteration %s is over oldServerPlayers length: %s"
+                    % (i, len(oldServerPlayers)))
                 continue
 
             username = oldServerPlayers[i].attrib['username']
             userCountryCode = oldServerPlayers[i].attrib['country-code']
-            userScore = float(oldServerPlayers[i].attrib['scores'] if 'scores' in oldServerPlayers[i].attrib else 0.0)
 
             if username in playersLeft:
                 if 'country-code' in oldServerPlayers[i].attrib:
@@ -270,21 +289,25 @@ async def triggerDiff(tree: et.Element):
 
                     if username in onlinePlayers:
                         del onlinePlayers[username]
-            
+
                 for i in await globals.prepared_ptrack_get.fetch():
 
                     id = i["id"]
 
                     data = await globals.prepared_ptrack_query.fetchrow(id)
 
-                    if data is None: continue
+                    if data is None:
+                        continue
 
                     if username in data["usernames"]:
-                        asyncio.create_task(ptrack_NotifyUserLeave(id, username, userCountryCode, serverName, serverCountry))
-
+                        asyncio.create_task(ptrack_NotifyUserLeave(
+                            id, username,
+                            userCountryCode, serverName,
+                            serverCountry))
 
         if len(oldServerPlayers) != len(serverPlayers):
-            log("PlayerTrack", f"Stub: Server {serverName} became full or free")
+            log("PlayerTrack",
+                f"Stub: Server {serverName} became full or free")
 
     try:
         if playersToInsertnocc:
@@ -295,12 +318,16 @@ async def triggerDiff(tree: et.Element):
         playersToInsert.clear()
         playersToInsertnocc.clear()
     except Exception as e:
-        log("PlayerTrack", f"Unable to save player info to DB: {e.__class__.__name__}: {e}")
+        log("PlayerTrack",
+            f"Unable to save player info to DB: {e.__class__.__name__}: {e}")
 
     if getConfig("debug_noonline"):
         log("Debug", "not saving online players to globals")
         pass
     else:
         globals.onlinePlayers = onlinePlayers
-        
+
+    prevTree = tree
+    globals.onlinePlayers = onlinePlayers
+
     prevTree = tree
