@@ -28,7 +28,7 @@ import asyncio
 import asyncpg
 import traceback
 import sys
-
+import random
 
 class Help(HelpCommand):
     async def send_help(self, ctx: CommandContext):
@@ -214,6 +214,24 @@ async def on_join(server: Server):
     except Exception:
         pass
 
+@client.listen('message')
+async def on_message(message: Message):
+    if message.content == client.user.mention:
+        return await message.reply(embed=SendableEmbed(
+            title=random.choice([
+                    "Haiiiii!",
+                    "Who ping?!?",
+                    "Hewwo :3",
+                    "You pinged me!",
+                    "Hey there!",
+                    "Nice to meet you!"
+                ]),
+            description=f"My prefix is `{client.prefix}`. Type `{client.prefix}help` to get started!",
+            icon_url=client.user.display_avatar.url,
+            color=globals.accentcolor
+        ))
+
+    await client.handle_commands(message)
 
 @client.error('message')
 async def on_error(error: Exception, message: Message):
