@@ -7,15 +7,17 @@ from voltage import (
     SendableEmbed
 )
 from stk.api import user
-from utils.flagconverter import flagconverter
-from utils.bigip import bigip
+from utils import (
+    convertAddonIdToName,
+    bigip,
+    flagconverter)
 from config import getConfig
 from log import log
 import globals
 import random
 
 
-def setup(client):
+def setup(client: CommandsClient):
 
     _ = Cog("Online", "")
 
@@ -94,7 +96,7 @@ def setup(client):
                     f"Warning: Skipping {serverName} because it's IP ({bigip(ip)}) is blacklisted.")
                 continue
 
-            result += f"\n{'' if password == 1 else '*'}*{serverName} ({bigip(ip)}:{port})*{'' if password == 1 else '*'}: {len(players)} player{'s' if len(players) > 1 else ''} - {currentTrack if currentTrack != '' else 'None'}:\n"
+            result += f"\n{'' if password == 1 else '*'}*{serverName} ({bigip(ip)}:{port})*{'' if password == 1 else '*'}: {len(players)} player{'s' if len(players) > 1 else ''} - {convertAddonIdToName(currentTrack) if currentTrack != '' else 'None'}:\n"
 
             for player in players:
 
