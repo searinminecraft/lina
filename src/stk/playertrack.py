@@ -79,8 +79,6 @@ async def triggerDiff(tree: et.Element):
 
     playersToInsert = []
     playersToInsertnocc = []
-    xmlServersCreated = []
-    xmlServersDeleted = []
 
     for i in range(len(tree[0])):
 
@@ -111,8 +109,6 @@ async def triggerDiff(tree: et.Element):
                 if username not in onlinePlayers:
                     onlinePlayers[username] = serverInfo
 
-            xmlServersCreated.append(tree[0][i])
-
     for i in range(len(prevTree[0])):
 
         _id = int(prevTree[0][i][0].attrib["id"])
@@ -126,8 +122,6 @@ async def triggerDiff(tree: et.Element):
                 bigip(int(prevTree[0][i][0].attrib['ip'])),
                 int(prevTree[0][i][0].attrib['port'])
                 ))
-
-            xmlServersDeleted.append(tree[0][i])
 
             playersLeft = prevTree[0][i][1]
 
