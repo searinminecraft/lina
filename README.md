@@ -1,5 +1,4 @@
-# This bot is currently undergoing a rewrite.
-This bot is currently being rewritten, because it's a mess. You can see the rewrite code in the `rewrite` branch.
+> As of March 16, 2024, linaSTK (at least, for the original Revolt version) has been discontinued. The [Discord version](https://codeberg.org/linaSTK/bot) (hosted on Codeberg) will continue to be worked on.
 
 <img align='right' width=25% height=25% src='https://autumn.revolt.chat/avatars/5YHRpsn89R4NK0P--iq_FFRCOiMZ1M8fGJWN0kmrJh/Untitled4_20231004182737.png'/>
 
